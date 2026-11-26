@@ -1,6 +1,6 @@
 
 
--- Recria o schema para permitir executar o arquivo mais de uma vez.
+
 DROP SCHEMA IF EXISTS gestao_games CASCADE;
 CREATE SCHEMA gestao_games;
 SET search_path TO gestao_games;

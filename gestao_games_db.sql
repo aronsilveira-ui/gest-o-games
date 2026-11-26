@@ -1,16 +1,10 @@
--- ============================================================
--- 1a Pratica SAEP - Sistema de Gestao e Agendamento de Torneios
--- SGBD: PostgreSQL
--- ============================================================
+
 
 -- Recria o schema para permitir executar o arquivo mais de uma vez.
 DROP SCHEMA IF EXISTS gestao_games CASCADE;
 CREATE SCHEMA gestao_games;
 SET search_path TO gestao_games;
 
--- ============================================================
--- DDL - TABELAS
--- ============================================================
 
 CREATE TABLE jogadores (
     id_jogador INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
@@ -67,10 +61,7 @@ CREATE TABLE historico_partidas (
         FOREIGN KEY (id_partida) REFERENCES partidas(id_partida)
 );
 
--- ============================================================
--- PL/pgSQL - VALIDACAO ANTES DA INSERCAO DA PARTIDA
--- Garante jogador ativo e define automaticamente data_criacao.
--- ============================================================
+
 
 CREATE OR REPLACE FUNCTION fn_validar_partida()
 RETURNS TRIGGER
@@ -104,10 +95,7 @@ BEFORE INSERT ON partidas
 FOR EACH ROW
 EXECUTE FUNCTION fn_validar_partida();
 
--- ============================================================
--- PL/pgSQL - REGISTRO AUTOMATICO NO HISTORICO
--- Executado depois que a partida for inserida com sucesso.
--- ============================================================
+
 
 CREATE OR REPLACE FUNCTION fn_registrar_historico_partida()
 RETURNS TRIGGER
@@ -129,9 +117,7 @@ AFTER INSERT ON partidas
 FOR EACH ROW
 EXECUTE FUNCTION fn_registrar_historico_partida();
 
--- ============================================================
--- DML - MASSA DE DADOS (minimo de 3 registros por tabela)
--- ============================================================
+
 
 INSERT INTO jogadores (nickname, email, senha, status) VALUES
 ('NinjaBR', 'ninjabr@email.com', 'senha123', 'ativo'),
@@ -156,10 +142,6 @@ VALUES
 ('LunaFPS x Equipe Eclipse', 2, 2, 2, CURRENT_TIMESTAMP + INTERVAL '4 days', 'agendada'),
 ('ShadowX x Equipe Turbo', 3, 3, 3, CURRENT_TIMESTAMP + INTERVAL '6 days', 'agendada');
 
--- ============================================================
--- FUNCTION DE CONSULTA - BUSCA POR NICKNAME OU E-MAIL
--- Pesquisa parcial, sem diferenciar letras maiusculas/minusculas.
--- ============================================================
 
 CREATE OR REPLACE FUNCTION fn_buscar_jogadores(p_termo TEXT)
 RETURNS TABLE (
@@ -180,9 +162,6 @@ BEGIN
 END;
 $$;
 
--- ============================================================
--- VIEW - PAINEL PRINCIPAL
--- ============================================================
 
 CREATE OR REPLACE VIEW vw_painel_principal AS
 SELECT
@@ -195,11 +174,7 @@ FROM partidas AS p
 JOIN jogadores AS j ON j.id_jogador = p.id_jogador
 JOIN jogos AS g ON g.id_jogo = p.id_jogo;
 
--- ============================================================
--- VIEW - CRONOGRAMA DE PARTIDAS
--- A ordenacao e da data mais proxima para a mais distante.
--- A consulta da view tambem pode aplicar ORDER BY ao seleciona-la.
--- ============================================================
+
 
 CREATE OR REPLACE VIEW vw_cronograma_partidas AS
 SELECT
@@ -217,30 +192,6 @@ JOIN jogos AS g ON g.id_jogo = p.id_jogo
 JOIN torneios AS t ON t.id_torneio = p.id_torneio
 ORDER BY p.data_agendamento ASC;
 
--- ============================================================
--- CONSULTAS PARA TESTAR O SISTEMA
--- ============================================================
 
--- Painel principal:
--- SELECT * FROM vw_painel_principal;
 
--- Cronograma em ordem cronologica:
--- SELECT * FROM vw_cronograma_partidas ORDER BY data_agendamento ASC;
 
--- Buscar jogador por parte do nickname ou e-mail:
--- SELECT * FROM fn_buscar_jogadores('ninja');
-
--- Conferir o historico criado automaticamente:
--- SELECT * FROM historico_partidas ORDER BY data_registro;
-
--- Teste de validacao: deve gerar erro porque o jogador esta banido.
--- INSERT INTO partidas
---     (titulo, id_jogador, id_jogo, id_torneio, data_agendamento)
--- VALUES
---     ('Teste invalido', 4, 1, 1, CURRENT_TIMESTAMP + INTERVAL '1 day');
-
--- ============================================================
--- FIM DO SCRIPT
--- Observacao: senha foi mantida como texto simples conforme o
--- enunciado da atividade. Em sistemas reais, use hash seguro.
--- ============================================================
